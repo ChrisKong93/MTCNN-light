@@ -54,5 +54,4 @@ struct orderScore
 void freepBox(struct pBox *pbox);
 void freeWeight(struct Weight *weight);
 void freepRelu(struct pRelu *prelu);
-
 #endif
