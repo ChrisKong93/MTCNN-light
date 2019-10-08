@@ -30,8 +30,6 @@ int main() {
 
         mtcnn find(image.rows, image.cols);
         clock_t start;
-        int stop = 1200;
-//     while(stop--){
         while (true) {
             start = clock();
             cap >> image;
