@@ -54,8 +54,5 @@ struct orderScore
 void freepBox(struct pBox *pbox);
 void freeWeight(struct Weight *weight);
 void freepRelu(struct pRelu *prelu);
-void pBoxShow(const struct pBox *pbox);
-void pBoxShowE(const struct pBox *pbox,int channel, int row);
-void weightShow(const struct Weight *weight);
-void pReluShow(const struct pRelu *prelu);
+
 #endif
