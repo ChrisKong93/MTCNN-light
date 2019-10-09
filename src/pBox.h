@@ -1,5 +1,6 @@
 #ifndef PBOX_H
 #define PBOX_H
+
 #include <stdlib.h>
 #include <iostream>
 
@@ -7,33 +8,29 @@ using namespace std;
 #define mydataFmt float
 
 
-struct pBox
-{
-	mydataFmt *pdata;
-	int width;
-	int height;
-	int channel;
+struct pBox {
+    mydataFmt *pdata;
+    int width;
+    int height;
+    int channel;
 };
 
-struct pRelu
-{
+struct pRelu {
     mydataFmt *pdata;
     int width;
 };
 
-struct Weight
-{
-	mydataFmt *pdata;
+struct Weight {
+    mydataFmt *pdata;
     mydataFmt *pbias;
     int lastChannel;
     int selfChannel;
-	int kernelSize;
+    int kernelSize;
     int stride;
     int pad;
 };
 
-struct Bbox
-{
+struct Bbox {
     float score;
     int x1;
     int y1;
@@ -45,13 +42,15 @@ struct Bbox
     mydataFmt regreCoord[4];
 };
 
-struct orderScore
-{
+struct orderScore {
     mydataFmt score;
     int oriOrder;
 };
 
 void freepBox(struct pBox *pbox);
+
 void freeWeight(struct Weight *weight);
+
 void freepRelu(struct pRelu *prelu);
+
 #endif

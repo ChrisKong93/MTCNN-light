@@ -1,12 +1,14 @@
 #ifndef MTCNN_H
 #define MTCNN_H
+
 #include "network.h"
 
-class Pnet
-{
+class Pnet {
 public:
     Pnet();
+
     ~Pnet();
+
     void run(Mat &image, float scale);
 
     float nms_threshold;
@@ -47,13 +49,16 @@ private:
     void generateBbox(const struct pBox *score, const struct pBox *location, mydataFmt scale);
 };
 
-class Rnet
-{
+class Rnet {
 public:
     Rnet();
+
     ~Rnet();
+
     float Rthreshold;
+
     void run(Mat &image);
+
     struct pBox *score_;
     struct pBox *location_;
 private:
@@ -71,7 +76,7 @@ private:
     struct pBox *conv3_out;
 
     struct pBox *fc4_out;
-    
+
     //Weight
     struct Weight *conv1_wb;
     struct pRelu *prelu_gmma1;
@@ -87,12 +92,14 @@ private:
     void RnetImage2MatrixInit(struct pBox *pbox);
 };
 
-class Onet
-{
+class Onet {
 public:
     Onet();
+
     ~Onet();
+
     void run(Mat &image);
+
     float Othreshold;
     struct pBox *score_;
     struct pBox *location_;
@@ -130,15 +137,18 @@ private:
     struct Weight *score_wb;
     struct Weight *location_wb;
     struct Weight *keyPoint_wb;
+
     void OnetImage2MatrixInit(struct pBox *pbox);
 };
 
-class mtcnn
-{
+class mtcnn {
 public:
     mtcnn(int row, int col);
+
     ~mtcnn();
+
     void findFace(Mat &image);
+
 private:
     Mat reImage;
     float nms_threshold[3];
