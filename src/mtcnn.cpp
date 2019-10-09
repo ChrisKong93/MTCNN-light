@@ -46,7 +46,7 @@ Pnet::Pnet() {
                             this->conv4c1_wb->pdata, this->conv4c1_wb->pbias, \
                             this->conv4c2_wb->pdata, this->conv4c2_wb->pbias \
 };
-    string filename = "Pnet.txt";
+    string filename = "../Pnet.txt";
     readData(filename, dataNumber, pointTeam);
 }
 
@@ -209,7 +209,7 @@ Rnet::Rnet() {
                                 this->score_wb->pdata, this->score_wb->pbias, \
                                 this->location_wb->pdata, this->location_wb->pbias \
 };
-    string filename = "Rnet.txt";
+    string filename = "../Rnet.txt";
     readData(filename, dataNumber, pointTeam);
 
     //Init the network
@@ -361,7 +361,7 @@ Onet::Onet() {
                                 this->location_wb->pdata, this->location_wb->pbias, \
                                 this->keyPoint_wb->pdata, this->keyPoint_wb->pbias \
 };
-    string filename = "Onet.txt";
+    string filename = "../Onet.txt";
     readData(filename, dataNumber, pointTeam);
 
     //Init the network
