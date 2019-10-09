@@ -4,8 +4,8 @@ project(main)
 set(QMAKE_CXXFLAGS "-std=c++11")
 include_directories(/home/software/openblas/include)
 link_directories(/home/software/openblas/lib)
-
-set(OpenCV_DIR /home/software/opencv/lib/cmake/opencv4)
+#opencv4.0
+#set(OpenCV_DIR /home/software/opencv/lib/cmake/opencv4)
 find_package( OpenCV REQUIRED)
 
 #set(CMAKE_BUILD_TYPE Debug)
