@@ -6,6 +6,8 @@ int main() {
     int b = 0;
     if (b == 0) {
         Mat image = imread("../4.jpg");
+//        Mat image = imread("/home/chris-pc/Desktop/timg.jpeg");
+//        Mat image = imread("/home/chris-pc/Desktop/2.jpeg");
         mtcnn find(image.rows, image.cols);
         clock_t start;
         start = clock();

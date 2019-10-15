@@ -73,7 +73,7 @@ Pnet::~Pnet() {
     freeWeight(this->conv4c2_wb);
 }
 
-void Pnet::run(Mat &image, float scale) {
+void Pnet::run(Mat &image, float scale, int size, int count) {
     if (firstFlag) {
         image2MatrixInit(image, this->rgb);
 
@@ -97,29 +97,28 @@ void Pnet::run(Mat &image, float scale) {
 
     image2Matrix(image, this->rgb);
 
-    feature2Matrix(this->rgb, this->conv1_matrix, this->conv1_wb);
-    convolution(this->conv1_wb, this->rgb, this->conv1, this->conv1_matrix);
+
+    convolution(this->conv1_wb, this->rgb, this->conv1);
     prelu(this->conv1, this->conv1_wb->pbias, this->prelu_gmma1->pdata);
     //Pooling layer
     maxPooling(this->conv1, this->maxPooling1, 2, 2);
 
-    feature2Matrix(this->maxPooling1, this->maxPooling_matrix, this->conv2_wb);
-    convolution(this->conv2_wb, this->maxPooling1, this->conv2, this->maxPooling_matrix);
+
+    convolution(this->conv2_wb, this->maxPooling1, this->conv2);
     prelu(this->conv2, this->conv2_wb->pbias, this->prelu_gmma2->pdata);
     //conv3 
-    feature2Matrix(this->conv2, this->conv3_matrix, this->conv3_wb);
-    convolution(this->conv3_wb, this->conv2, this->conv3, this->conv3_matrix);
+
+    convolution(this->conv3_wb, this->conv2, this->conv3);
     prelu(this->conv3, this->conv3_wb->pbias, this->prelu_gmma3->pdata);
     //conv4c1   score
-    feature2Matrix(this->conv3, this->score_matrix, this->conv4c1_wb);
-    convolution(this->conv4c1_wb, this->conv3, this->score_, this->score_matrix);
+
+    convolution(this->conv4c1_wb, this->conv3, this->score_);
     addbias(this->score_, this->conv4c1_wb->pbias);
     softmax(this->score_);
     // pBoxShow(this->score_);
 
     //conv4c2   location
-    feature2Matrix(this->conv3, this->location_matrix, this->conv4c2_wb);
-    convolution(this->conv4c2_wb, this->conv3, this->location_, this->location_matrix);
+    convolution(this->conv4c2_wb, this->conv3, this->location_);
     addbias(this->location_, this->conv4c2_wb->pbias);
     //softmax layer
     generateBbox(this->score_, this->location_, scale);
@@ -272,20 +271,17 @@ void Rnet::RnetImage2MatrixInit(struct pBox *pbox) {
 void Rnet::run(Mat &image) {
     image2Matrix(image, this->rgb);
 
-    feature2Matrix(this->rgb, this->conv1_matrix, this->conv1_wb);
-    convolution(this->conv1_wb, this->rgb, this->conv1_out, this->conv1_matrix);
+    convolution(this->conv1_wb, this->rgb, this->conv1_out);
     prelu(this->conv1_out, this->conv1_wb->pbias, this->prelu_gmma1->pdata);
 
     maxPooling(this->conv1_out, this->pooling1_out, 3, 2);
 
-    feature2Matrix(this->pooling1_out, this->conv2_matrix, this->conv2_wb);
-    convolution(this->conv2_wb, this->pooling1_out, this->conv2_out, this->conv2_matrix);
+    convolution(this->conv2_wb, this->pooling1_out, this->conv2_out);
     prelu(this->conv2_out, this->conv2_wb->pbias, this->prelu_gmma2->pdata);
     maxPooling(this->conv2_out, this->pooling2_out, 3, 2);
 
-    //conv3 
-    feature2Matrix(this->pooling2_out, this->conv3_matrix, this->conv3_wb);
-    convolution(this->conv3_wb, this->pooling2_out, this->conv3_out, this->conv3_matrix);
+    //conv3
+    convolution(this->conv3_wb, this->pooling2_out, this->conv3_out);
     prelu(this->conv3_out, this->conv3_wb->pbias, this->prelu_gmma3->pdata);
 
     //flatten
@@ -439,27 +435,25 @@ void Onet::OnetImage2MatrixInit(struct pBox *pbox) {
 void Onet::run(Mat &image) {
     image2Matrix(image, this->rgb);
 
-    feature2Matrix(this->rgb, this->conv1_matrix, this->conv1_wb);
-    convolution(this->conv1_wb, this->rgb, this->conv1_out, this->conv1_matrix);
+    convolution(this->conv1_wb, this->rgb, this->conv1_out);
     prelu(this->conv1_out, this->conv1_wb->pbias, this->prelu_gmma1->pdata);
 
     //Pooling layer
     maxPooling(this->conv1_out, this->pooling1_out, 3, 2);
 
-    feature2Matrix(this->pooling1_out, this->conv2_matrix, this->conv2_wb);
-    convolution(this->conv2_wb, this->pooling1_out, this->conv2_out, this->conv2_matrix);
+
+    convolution(this->conv2_wb, this->pooling1_out, this->conv2_out);
     prelu(this->conv2_out, this->conv2_wb->pbias, this->prelu_gmma2->pdata);
     maxPooling(this->conv2_out, this->pooling2_out, 3, 2);
 
-    //conv3 
-    feature2Matrix(this->pooling2_out, this->conv3_matrix, this->conv3_wb);
-    convolution(this->conv3_wb, this->pooling2_out, this->conv3_out, this->conv3_matrix);
+    //conv3
+    convolution(this->conv3_wb, this->pooling2_out, this->conv3_out);
     prelu(this->conv3_out, this->conv3_wb->pbias, this->prelu_gmma3->pdata);
     maxPooling(this->conv3_out, this->pooling3_out, 2, 2);
 
     //conv4
-    feature2Matrix(this->pooling3_out, this->conv4_matrix, this->conv4_wb);
-    convolution(this->conv4_wb, this->pooling3_out, this->conv4_out, this->conv4_matrix);
+    convolution(this->conv4_wb, this->pooling3_out, this->conv4_out);
+//    convolution(this->conv4_wb, this->pooling3_out, this->conv4_out, this->conv4_matrix);
     prelu(this->conv4_out, this->conv4_wb->pbias, this->prelu_gmma4->pdata);
 
     fullconnect(this->fc5_wb, this->conv4_out, this->fc5_out);
@@ -532,7 +526,7 @@ void mtcnn::findFace(Mat &image) {
         int changedH = (int) ceil(image.rows * scales_.at(i));
         int changedW = (int) ceil(image.cols * scales_.at(i));
         resize(image, reImage, Size(changedW, changedH), 0, 0, cv::INTER_LINEAR);
-        simpleFace_[i].run(reImage, scales_.at(i));
+        simpleFace_[i].run(reImage, scales_.at(i), scales_.size(), i);
         nms(simpleFace_[i].boundingBox_, simpleFace_[i].bboxScore_, simpleFace_[i].nms_threshold, "Union");
 
         for (vector<struct Bbox>::iterator it = simpleFace_[i].boundingBox_.begin();
@@ -549,6 +543,7 @@ void mtcnn::findFace(Mat &image) {
         simpleFace_[i].boundingBox_.clear();
     }
     //the first stage's nms
+    printf("count1:%d\n", count);
     if (count < 1)return;
     nms(firstBbox_, firstOrderScore_, nms_threshold[0], "Union");
     refineAndSquareBbox(firstBbox_, image.rows, image.cols);
@@ -576,6 +571,7 @@ void mtcnn::findFace(Mat &image) {
             }
         }
     }
+    printf("count2:%d\n", count);
     if (count < 1)return;
     nms(secondBbox_, secondBboxScore_, nms_threshold[1], "Union");
     refineAndSquareBbox(secondBbox_, image.rows, image.cols);
@@ -610,7 +606,7 @@ void mtcnn::findFace(Mat &image) {
             }
         }
     }
-
+    printf("count3:%d\n", count);
     if (count < 1)return;
     refineAndSquareBbox(thirdBbox_, image.rows, image.cols);
     nms(thirdBbox_, thirdBboxScore_, nms_threshold[2], "Min");

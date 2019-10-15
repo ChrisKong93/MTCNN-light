@@ -20,13 +20,10 @@ void image2Matrix(const Mat &image, const struct pBox *pbox);
 
 void featurePad(const pBox *pbox, const pBox *outpBox, const int pad);
 
-void feature2Matrix(const pBox *pbox, pBox *Matrix, const Weight *weight);
 
 void maxPooling(const pBox *pbox, pBox *Matrix, int kernelSize, int stride);
 
 void prelu(struct pBox *pbox, mydataFmt *pbias, mydataFmt *prelu_gmma);
-
-void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox, const struct pBox *matrix);
 
 void fullconnect(const Weight *weight, const pBox *pbox, pBox *outpBox);
 
@@ -59,5 +56,7 @@ void refineAndSquareBbox(vector<struct Bbox> &vecBbox, const int &height, const 
 void matrixXmatrix(float *matrix, float *v, int m_w, int m_h, int v_w, int v_h, float *p);
 
 void vectorXmatrix(float *matrix, float *v, int size, int v_w, int v_h, float *p);
+
+void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox);
 
 #endif

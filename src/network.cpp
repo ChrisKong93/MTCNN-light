@@ -47,9 +47,12 @@ void image2Matrix(const Mat &image, const struct pBox *pbox) {
     mydataFmt *p = pbox->pdata;
     for (int rowI = 0; rowI < image.rows; rowI++) {
         for (int colK = 0; colK < image.cols; colK++) {
-            *p = (image.at<Vec3b>(rowI, colK)[0] - 127.5) * 0.0078125;//opencvµÄÍ¨µÀÅÅÐòÊÇRGB
+//            *p = (image.at<Vec3b>(rowI, colK)[0] - 127.5) * 0.0078125;//opencvµÄÍ¨µÀÅÅÐòÊÇRGB
             *(p + image.rows * image.cols) = (image.at<Vec3b>(rowI, colK)[1] - 127.5) * 0.0078125;
+//            *(p + 1) = (image.at<Vec3b>(rowI, colK)[1] - 127.5) * 0.0078125;
             *(p + 2 * image.rows * image.cols) = (image.at<Vec3b>(rowI, colK)[2] - 127.5) * 0.0078125;
+//            *(p + 2) = (image.at<Vec3b>(rowI, colK)[2] - 127.5) * 0.0078125;
+//            p += 3;
             p++;
         }
     }
@@ -102,7 +105,6 @@ void feature2Matrix(const pBox *pbox, pBox *Matrix, const Weight *weight) {
     for (int row = 0; row < h_out; row++) {
         for (int col = 0; col < w_out; col++) {
             pIn = pbox->pdata + row * stride * pbox->width + col * stride;
-
             for (int channel = 0; channel < pbox->channel; channel++) {
                 ptemp = pIn + channel * pbox->height * pbox->width;
                 for (int kernelRow = 0; kernelRow < kernelSize; kernelRow++) {
@@ -124,92 +126,38 @@ void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox, cons
     memset(outpBox->pdata, 0, weight->selfChannel * matrix->height * sizeof(mydataFmt));
 }
 
-void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox, const struct pBox *matrix) {
-    if (pbox->pdata == NULL) {
-        cout << "the feature is NULL!!" << endl;
-        return;
-    }
-    if (weight->pdata == NULL) {
-        cout << "the weight is NULL!!" << endl;
-        return;
-    }
 
-    if (weight->pad == 0) {
-        //C←αAB + βC
-        //                1              2            3              4     C's size    5              k     alpha     A*              A'col             B*           B'col    beta      C*           C'col
-        //cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, weight->selfChannel, matrix->height, matrix->width, 1, weight->pdata, matrix->width, matrix->pdata, matrix->width, 0, outpBox->pdata, matrix->height);
-        matrixXmatrix(matrix->pdata, weight->pdata, matrix->width, matrix->height,
-                      weight->kernelSize * weight->kernelSize * weight->lastChannel, weight->selfChannel,
-                      outpBox->pdata);
-    } else {
-        struct pBox *padpbox = new pBox;
-        featurePad(pbox, padpbox, weight->pad);
-        //C←αAB + βC
-        //                1              2            3              4     C's size    5              k     alpha     A*              A'col             B*           B'col    beta      C*           C'col
-        //cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, weight->selfChannel, matrix->height, matrix->width, 1, weight->pdata, matrix->width, matrix->pdata, matrix->width, 0, outpBox->pdata, matrix->height);
-        matrixXmatrix(matrix->pdata, weight->pdata, matrix->width, matrix->height,
-                      weight->kernelSize * weight->kernelSize * weight->lastChannel, weight->selfChannel,
-                      outpBox->pdata);
-        freepBox(padpbox);
-    }
-}
+void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox) {
+    int ckh, ckw, ckd, cknum, imginputh, imginputw, imginputd;
+    float *ck, *imginput;
+    float *r = outpBox->pdata;
+    float temp;
+    ck = weight->pdata;
+    ckh = weight->kernelSize;
+    ckw = weight->kernelSize;
+    ckd = weight->lastChannel;
+    cknum = weight->selfChannel;
+    imginput = pbox->pdata;
+    imginputh = pbox->height;
+    imginputw = pbox->width;
+    imginputd = pbox->channel;
+    for (int i = 0; i < cknum; ++i) {
+        for (int j = 0; j < imginputh - ((ckh + 1) / 2); ++j) {
+            for (int k = 0; k < imginputw - ((ckw + 1) / 2); ++k) {
+                temp = 0.0;
+                for (int m = 0; m < ckd; ++m) {
+                    for (int n = 0; n < ckh; ++n) {
+                        for (int i1 = 0; i1 < ckw; ++i1) {
+                            temp +=
+                                    imginput[(j + n) * imginputw + (k + i1) + m * imginputh * imginputw]
+                                    * ck[i * ckh * ckw * ckd + m * ckh * ckw + n * ckw + i1];
 
-//matrix表示原图像，v表示模板，m_h表示原图像的高，m_w表示原图像的宽，v_w表示模板的宽，v_h表示模板的高
-void matrixXmatrix(float *matrix, float *v, int m_w, int m_h, int v_w, int v_h, float *p) {
-    //int i, j, k, l;
-    vector<vector<float>> arrA(m_h);
-    vector<vector<float>> arrB(v_w);
-    vector<vector<float>> res(m_h);
-
-    for (int i = 0; i < m_h; i++) {
-        arrA[i].resize(m_w);
-    }
-    for (int i = 0; i < v_w; i++) {
-        arrB[i].resize(v_h);
-    }
-
-    for (int i = 0; i < m_h; i++) {
-        for (int j = 0; j < m_w; j++) {
-            arrA[i][j] = matrix[i * m_w + j];
-        }
-    }
-    for (int i = 0; i < v_h; i++) {
-        for (int j = 0; j < v_w; j++) {
-            arrB[j][i] = v[i * v_w + j];
-        }
-    }
-    //矩阵arrA的行数
-    int rowA = arrA.size();
-    //矩阵arrA的列数
-    int colA = arrA[0].size();
-    //矩阵arrB的行数
-    int rowB = arrB.size();
-    //矩阵arrB的列数
-    int colB = arrB[0].size();
-    //相乘后的结果矩阵
-    if (colA != rowB)//如果矩阵arrA的列数不等于矩阵arrB的行数。则返回空
-    {
-        return;
-    } else {
-        //设置结果矩阵的大小，初始化为为0
-        res.resize(rowA);
-        for (int i = 0; i < rowA; ++i) {
-            res[i].resize(colB);
-        }
-        //矩阵相乘
-        for (int i = 0; i < rowA; ++i) {
-            for (int j = 0; j < colB; ++j) {
-                for (int k = 0; k < colA; ++k) {
-                    res[i][j] += arrA[i][k] * arrB[k][j];
-                    //res[i][j] += arrA[i][k] * arrB[j][k];
+                        }
+                    }
                 }
+                r[i * outpBox->height * outpBox->width + j * outpBox->width + k] = temp;
             }
-        }
-    }
 
-    for (int i = 0; i < colB; i++) {
-        for (int j = 0; j < rowA; j++) {
-            p[i * rowA + j] = res[j][i];
         }
     }
 }
