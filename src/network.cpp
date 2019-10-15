@@ -47,7 +47,7 @@ void image2Matrix(const Mat &image, const struct pBox *pbox) {
     mydataFmt *p = pbox->pdata;
     for (int rowI = 0; rowI < image.rows; rowI++) {
         for (int colK = 0; colK < image.cols; colK++) {
-            *p = (image.at<Vec3b>(rowI, colK)[0] - 127.5) * 0.0078125;//opencvµÄÍ¨µÀÅÅÐòÊÇRGB
+            *p = (image.at<Vec3b>(rowI, colK)[0] - 127.5) * 0.0078125;
             *(p + image.rows * image.cols) = (image.at<Vec3b>(rowI, colK)[1] - 127.5) * 0.0078125;
             *(p + 2 * image.rows * image.cols) = (image.at<Vec3b>(rowI, colK)[2] - 127.5) * 0.0078125;
             p++;
@@ -59,9 +59,9 @@ void feature2MatrixInit(const pBox *pbox, pBox *Matrix, const Weight *weight) {
 
     int kernelSize = weight->kernelSize;
     int stride = weight->stride;
-    int w_out = (pbox->width - kernelSize) / stride + 1;//Õâ¸ö¹«Ê½Ò»¶¨Òª¸ãÇå³þ£¬¿ÉÒÔ×Ô¼ºÈ¥»­¸ö¾ØÕó¿´¿´
+    int w_out = (pbox->width - kernelSize) / stride + 1;
     int h_out = (pbox->height - kernelSize) / stride + 1;
-    Matrix->width = pbox->channel * kernelSize * kernelSize;//Î´×ªÖÃÇ°µÄ¿í¶È
+    Matrix->width = pbox->channel * kernelSize * kernelSize;
     Matrix->height = w_out * h_out;
     Matrix->channel = 1;
     Matrix->pdata = (mydataFmt *) malloc(Matrix->width * Matrix->height * sizeof(mydataFmt));
