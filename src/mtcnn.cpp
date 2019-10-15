@@ -549,6 +549,7 @@ void mtcnn::findFace(Mat &image) {
         simpleFace_[i].boundingBox_.clear();
     }
     //the first stage's nms
+    printf("count1:%d\n",count);
     if (count < 1)return;
     nms(firstBbox_, firstOrderScore_, nms_threshold[0], "Union");
     refineAndSquareBbox(firstBbox_, image.rows, image.cols);
@@ -576,6 +577,7 @@ void mtcnn::findFace(Mat &image) {
             }
         }
     }
+    printf("count2:%d\n",count);
     if (count < 1)return;
     nms(secondBbox_, secondBboxScore_, nms_threshold[1], "Union");
     refineAndSquareBbox(secondBbox_, image.rows, image.cols);
@@ -610,7 +612,7 @@ void mtcnn::findFace(Mat &image) {
             }
         }
     }
-
+    printf("count3:%d\n",count);
     if (count < 1)return;
     refineAndSquareBbox(thirdBbox_, image.rows, image.cols);
     nms(thirdBbox_, thirdBboxScore_, nms_threshold[2], "Min");
