@@ -6,8 +6,6 @@ int main() {
     int b = 0;
     if (b == 0) {
         Mat image = imread("../4.jpg");
-//        Mat image = imread("/home/chris-pc/Desktop/timg.jpeg");
-//        Mat image = imread("/home/chris-pc/Desktop/2.jpeg");
         mtcnn find(image.rows, image.cols);
         clock_t start;
         start = clock();
@@ -15,7 +13,6 @@ int main() {
         imshow("result", image);
         imwrite("../result.jpg", image);
         start = clock() - start;
-//    cout<<"time is  "<<start/10e3<<endl;
         cout << "time is " << (double) start / CLOCKS_PER_SEC * 1000 << "ms" << endl;
         waitKey(0);
         image.release();

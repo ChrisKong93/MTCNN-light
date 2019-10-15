@@ -47,31 +47,11 @@ void image2Matrix(const Mat &image, const struct pBox *pbox) {
     mydataFmt *p = pbox->pdata;
     for (int rowI = 0; rowI < image.rows; rowI++) {
         for (int colK = 0; colK < image.cols; colK++) {
-//            *p = (image.at<Vec3b>(rowI, colK)[0] - 127.5) * 0.0078125;//opencvµÄÍ¨µÀÅÅÐòÊÇRGB
+            *p = (image.at<Vec3b>(rowI, colK)[0] - 127.5) * 0.0078125;//opencvµÄÍ¨µÀÅÅÐòÊÇRGB
             *(p + image.rows * image.cols) = (image.at<Vec3b>(rowI, colK)[1] - 127.5) * 0.0078125;
-//            *(p + 1) = (image.at<Vec3b>(rowI, colK)[1] - 127.5) * 0.0078125;
             *(p + 2 * image.rows * image.cols) = (image.at<Vec3b>(rowI, colK)[2] - 127.5) * 0.0078125;
-//            *(p + 2) = (image.at<Vec3b>(rowI, colK)[2] - 127.5) * 0.0078125;
-//            p += 3;
             p++;
         }
-    }
-}
-
-void featurePad(const pBox *pbox, const pBox *outpBox, const int pad) {
-    mydataFmt *p = outpBox->pdata;
-    mydataFmt *pIn = pbox->pdata;
-
-    for (int row = 0; row < outpBox->channel * outpBox->height; row++) {
-
-        if ((row % outpBox->height) < pad || (row % outpBox->height > (outpBox->height - pad - 1))) {
-            p += outpBox->width;
-            continue;
-        }
-        p += pad;
-        memcpy(p, pIn, pbox->width * sizeof(mydataFmt));
-        p += pbox->width + pad;
-        pIn += pbox->width;
     }
 }
 
@@ -89,34 +69,6 @@ void feature2MatrixInit(const pBox *pbox, pBox *Matrix, const Weight *weight) {
     memset(Matrix->pdata, 0, Matrix->width * Matrix->height * sizeof(mydataFmt));
 }
 
-void feature2Matrix(const pBox *pbox, pBox *Matrix, const Weight *weight) {
-    if (pbox->pdata == NULL) {
-        cout << "the feature2Matrix pbox is NULL!!" << endl;
-        return;
-    }
-    int kernelSize = weight->kernelSize;
-    int stride = weight->stride;
-    int w_out = (pbox->width - kernelSize) / stride + 1;//Õâ¸ö¹«Ê½Ò»¶¨Òª¸ãÇå³þ£¬¿ÉÒÔ×Ô¼ºÈ¥»­¸ö¾ØÕó¿´¿´
-    int h_out = (pbox->height - kernelSize) / stride + 1;
-
-    mydataFmt *p = Matrix->pdata;
-    mydataFmt *pIn;
-    mydataFmt *ptemp;
-    for (int row = 0; row < h_out; row++) {
-        for (int col = 0; col < w_out; col++) {
-            pIn = pbox->pdata + row * stride * pbox->width + col * stride;
-            for (int channel = 0; channel < pbox->channel; channel++) {
-                ptemp = pIn + channel * pbox->height * pbox->width;
-                for (int kernelRow = 0; kernelRow < kernelSize; kernelRow++) {
-                    memcpy(p, ptemp, kernelSize * sizeof(mydataFmt));
-                    p += kernelSize;
-                    ptemp += pbox->width;
-                }
-            }
-        }
-    }
-}
-
 void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox, const struct pBox *matrix) {
     outpBox->channel = weight->selfChannel;
     outpBox->width = (pbox->width - weight->kernelSize) / weight->stride + 1;
@@ -125,7 +77,6 @@ void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox, cons
     if (outpBox->pdata == NULL)cout << "the convolutionInit is failed!!" << endl;
     memset(outpBox->pdata, 0, weight->selfChannel * matrix->height * sizeof(mydataFmt));
 }
-
 
 void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox) {
     int ckh, ckw, ckd, cknum, imginputh, imginputw, imginputd;
@@ -151,10 +102,10 @@ void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox) {
                             temp +=
                                     imginput[(j + n) * imginputw + (k + i1) + m * imginputh * imginputw]
                                     * ck[i * ckh * ckw * ckd + m * ckh * ckw + n * ckw + i1];
-
                         }
                     }
                 }
+                //按照顺序存储
                 r[i * outpBox->height * outpBox->width + j * outpBox->width + k] = temp;
             }
 
@@ -180,7 +131,6 @@ void maxPooling(const pBox *pbox, pBox *Matrix, int kernelSize, int stride) {
     mydataFmt *pIn;
     mydataFmt *ptemp;
     mydataFmt maxNum = 0;
-    //if((pbox->width-kernelSize)%stride==0){
     if ((pbox->width - kernelSize) % stride == 0 && (pbox->height - kernelSize) % stride == 0) {
         for (int row = 0; row < Matrix->height; row++) {
             for (int col = 0; col < Matrix->width; col++) {

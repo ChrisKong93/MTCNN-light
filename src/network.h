@@ -18,9 +18,6 @@ void addbias(struct pBox *pbox, mydataFmt *pbias);
 
 void image2Matrix(const Mat &image, const struct pBox *pbox);
 
-void featurePad(const pBox *pbox, const pBox *outpBox, const int pad);
-
-
 void maxPooling(const pBox *pbox, pBox *Matrix, int kernelSize, int stride);
 
 void prelu(struct pBox *pbox, mydataFmt *pbias, mydataFmt *prelu_gmma);
@@ -52,8 +49,6 @@ void nms(vector<struct Bbox> &boundingBox_, vector<struct orderScore> &bboxScore
          string modelname = "Union");
 
 void refineAndSquareBbox(vector<struct Bbox> &vecBbox, const int &height, const int &width);
-
-void matrixXmatrix(float *matrix, float *v, int m_w, int m_h, int v_w, int v_h, float *p);
 
 void vectorXmatrix(float *matrix, float *v, int size, int v_w, int v_h, float *p);
 

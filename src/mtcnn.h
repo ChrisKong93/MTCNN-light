@@ -9,7 +9,7 @@ public:
 
     ~Pnet();
 
-    void run(Mat &image, float scale, int size, int count);
+    void run(Mat &image, float scale);
 
     float nms_threshold;
     mydataFmt Pthreshold;
