@@ -20,6 +20,8 @@ void image2Matrix(const Mat &image, const struct pBox *pbox);
 
 void maxPooling(const pBox *pbox, pBox *Matrix, int kernelSize, int stride);
 
+void featurePad(const pBox *pbox, const pBox *outpBox, const int pad);
+
 void prelu(struct pBox *pbox, mydataFmt *pbias, mydataFmt *prelu_gmma);
 
 void fullconnect(const Weight *weight, const pBox *pbox, pBox *outpBox);
@@ -34,14 +36,13 @@ void softmax(const struct pBox *pbox);
 
 void image2MatrixInit(Mat &image, struct pBox *pbox);
 
+void featurePadInit(const pBox *pbox, pBox *outpBox, const int pad);
+
 void maxPoolingInit(const pBox *pbox, pBox *Matrix, int kernelSize, int stride);
 
-void feature2MatrixInit(const pBox *pbox, pBox *Matrix, const Weight *weight);
-
-void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox, const struct pBox *matrix);
+void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox);
 
 void fullconnectInit(const Weight *weight, pBox *outpBox);
-
 
 bool cmpScore(struct orderScore lsh, struct orderScore rsh);
 

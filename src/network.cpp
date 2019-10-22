@@ -55,30 +55,51 @@ void image2Matrix(const Mat &image, const struct pBox *pbox) {
     }
 }
 
-void feature2MatrixInit(const pBox *pbox, pBox *Matrix, const Weight *weight) {
-
-    int kernelSize = weight->kernelSize;
-    int stride = weight->stride;
-    int w_out = (pbox->width - kernelSize) / stride + 1;
-    int h_out = (pbox->height - kernelSize) / stride + 1;
-    Matrix->width = pbox->channel * kernelSize * kernelSize;
-    Matrix->height = w_out * h_out;
-    Matrix->channel = 1;
-    Matrix->pdata = (mydataFmt *) malloc(Matrix->width * Matrix->height * sizeof(mydataFmt));
-    if (Matrix->pdata == NULL)cout << "the feature2MatrixInit failed!!" << endl;
-    memset(Matrix->pdata, 0, Matrix->width * Matrix->height * sizeof(mydataFmt));
+void featurePadInit(const pBox *pbox, pBox *outpBox, const int pad) {
+    if (pad <= 0) {
+        cout << "the data needn't to pad,please check you network!" << endl;
+        return;
+    }
+    outpBox->channel = pbox->channel;
+    outpBox->height = pbox->height + 2 * pad;
+    outpBox->width = pbox->width + 2 * pad;
+    long RowByteNum = outpBox->width * sizeof(mydataFmt);
+    outpBox->pdata = (mydataFmt *) malloc(outpBox->channel * outpBox->height * RowByteNum);
+    if (outpBox->pdata == NULL)cout << "the featurePadInit is failed!!" << endl;
+    memset(outpBox->pdata, 0, outpBox->channel * outpBox->height * RowByteNum);
 }
 
-void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox, const struct pBox *matrix) {
+void featurePad(const pBox *pbox, const pBox *outpBox, const int pad) {
+    mydataFmt *p = outpBox->pdata;
+    mydataFmt *pIn = pbox->pdata;
+
+    for (int row = 0; row < outpBox->channel * outpBox->height; row++) {
+
+        if ((row % outpBox->height) < pad || (row % outpBox->height > (outpBox->height - pad - 1))) {
+            p += outpBox->width;
+            continue;
+        }
+        p += pad;
+        memcpy(p, pIn, pbox->width * sizeof(mydataFmt));
+        p += pbox->width + pad;
+        pIn += pbox->width;
+    }
+}
+
+void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox) {
     outpBox->channel = weight->selfChannel;
     outpBox->width = (pbox->width - weight->kernelSize) / weight->stride + 1;
     outpBox->height = (pbox->height - weight->kernelSize) / weight->stride + 1;
-    outpBox->pdata = (mydataFmt *) malloc(weight->selfChannel * matrix->height * sizeof(mydataFmt));
+    outpBox->pdata = (mydataFmt *) malloc(outpBox->width * outpBox->height * outpBox->channel * sizeof(mydataFmt));
     if (outpBox->pdata == NULL)cout << "the convolutionInit is failed!!" << endl;
-    memset(outpBox->pdata, 0, weight->selfChannel * matrix->height * sizeof(mydataFmt));
+    memset(outpBox->pdata, 0, outpBox->width * outpBox->height * outpBox->channel * sizeof(mydataFmt));
 }
 
 void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox) {
+    if (weight->pad != 0) {
+        struct pBox *padpbox = new pBox;
+        featurePad(pbox, padpbox, weight->pad);
+    }
     int ckh, ckw, ckd, cknum, imginputh, imginputw, imginputd;
     float *ck, *imginput;
     float *r = outpBox->pdata;

@@ -6,20 +6,12 @@ Pnet::Pnet() {
     firstFlag = true;
     this->rgb = new pBox;
 
-    this->conv1_matrix = new pBox;
     this->conv1 = new pBox;
     this->maxPooling1 = new pBox;
-
-    this->maxPooling_matrix = new pBox;
     this->conv2 = new pBox;
-
-    this->conv3_matrix = new pBox;
     this->conv3 = new pBox;
-
-    this->score_matrix = new pBox;
     this->score_ = new pBox;
 
-    this->location_matrix = new pBox;
     this->location_ = new pBox;
 
     this->conv1_wb = new Weight;
@@ -58,60 +50,41 @@ Pnet::~Pnet() {
     freepBox(this->score_);
     freepBox(this->location_);
 
-    freepBox(this->conv1_matrix);
     freeWeight(this->conv1_wb);
     freepRelu(this->prelu_gmma1);
-    freepBox(this->maxPooling_matrix);
     freeWeight(this->conv2_wb);
-    freepBox(this->conv3_matrix);
     freepRelu(this->prelu_gmma2);
     freeWeight(this->conv3_wb);
-    freepBox(this->score_matrix);
     freepRelu(this->prelu_gmma3);
     freeWeight(this->conv4c1_wb);
-    freepBox(this->location_matrix);
     freeWeight(this->conv4c2_wb);
 }
 
 void Pnet::run(Mat &image, float scale) {
     if (firstFlag) {
         image2MatrixInit(image, this->rgb);
-
-        feature2MatrixInit(this->rgb, this->conv1_matrix, this->conv1_wb);
-        convolutionInit(this->conv1_wb, this->rgb, this->conv1, this->conv1_matrix);
-
+        convolutionInit(this->conv1_wb, this->rgb, this->conv1);
         maxPoolingInit(this->conv1, this->maxPooling1, 2, 2);
-        feature2MatrixInit(this->maxPooling1, this->maxPooling_matrix, this->conv2_wb);
-        convolutionInit(this->conv2_wb, this->maxPooling1, this->conv2, this->maxPooling_matrix);
-
-        feature2MatrixInit(this->conv2, this->conv3_matrix, this->conv3_wb);
-        convolutionInit(this->conv3_wb, this->conv2, this->conv3, this->conv3_matrix);
-
-        feature2MatrixInit(this->conv3, this->score_matrix, this->conv4c1_wb);
-        convolutionInit(this->conv4c1_wb, this->conv3, this->score_, this->score_matrix);
-
-        feature2MatrixInit(this->conv3, this->location_matrix, this->conv4c2_wb);
-        convolutionInit(this->conv4c2_wb, this->conv3, this->location_, this->location_matrix);
+        convolutionInit(this->conv2_wb, this->maxPooling1, this->conv2);
+        convolutionInit(this->conv3_wb, this->conv2, this->conv3);
+        convolutionInit(this->conv4c1_wb, this->conv3, this->score_);
+        convolutionInit(this->conv4c2_wb, this->conv3, this->location_);
         firstFlag = false;
     }
 
     image2Matrix(image, this->rgb);
-
 
     convolution(this->conv1_wb, this->rgb, this->conv1);
     prelu(this->conv1, this->conv1_wb->pbias, this->prelu_gmma1->pdata);
     //Pooling layer
     maxPooling(this->conv1, this->maxPooling1, 2, 2);
 
-
     convolution(this->conv2_wb, this->maxPooling1, this->conv2);
     prelu(this->conv2, this->conv2_wb->pbias, this->prelu_gmma2->pdata);
-    //conv3 
-
+    //conv3
     convolution(this->conv3_wb, this->conv2, this->conv3);
     prelu(this->conv3, this->conv3_wb->pbias, this->prelu_gmma3->pdata);
     //conv4c1   score
-
     convolution(this->conv4c1_wb, this->conv3, this->score_);
     addbias(this->score_, this->conv4c1_wb->pbias);
     softmax(this->score_);
@@ -170,15 +143,12 @@ Rnet::Rnet() {
     Rthreshold = 0.7f;
 
     this->rgb = new pBox;
-    this->conv1_matrix = new pBox;
     this->conv1_out = new pBox;
     this->pooling1_out = new pBox;
 
-    this->conv2_matrix = new pBox;
     this->conv2_out = new pBox;
     this->pooling2_out = new pBox;
 
-    this->conv3_matrix = new pBox;
     this->conv3_out = new pBox;
 
     this->fc4_out = new pBox;
@@ -219,14 +189,11 @@ Rnet::Rnet() {
 
     //Init the network
     RnetImage2MatrixInit(rgb);
-    feature2MatrixInit(this->rgb, this->conv1_matrix, this->conv1_wb);
-    convolutionInit(this->conv1_wb, this->rgb, this->conv1_out, this->conv1_matrix);
+    convolutionInit(this->conv1_wb, this->rgb, this->conv1_out);
     maxPoolingInit(this->conv1_out, this->pooling1_out, 3, 2);
-    feature2MatrixInit(this->pooling1_out, this->conv2_matrix, this->conv2_wb);
-    convolutionInit(this->conv2_wb, this->pooling1_out, this->conv2_out, this->conv2_matrix);
+    convolutionInit(this->conv2_wb, this->pooling1_out, this->conv2_out);
     maxPoolingInit(this->conv2_out, this->pooling2_out, 3, 2);
-    feature2MatrixInit(this->pooling2_out, this->conv3_matrix, this->conv3_wb);
-    convolutionInit(this->conv3_wb, this->pooling2_out, this->conv3_out, this->conv3_matrix);
+    convolutionInit(this->conv3_wb, this->pooling2_out, this->conv3_out);
     fullconnectInit(this->fc4_wb, this->fc4_out);
     fullconnectInit(this->score_wb, this->score_);
     fullconnectInit(this->location_wb, this->location_);
@@ -234,13 +201,10 @@ Rnet::Rnet() {
 
 Rnet::~Rnet() {
     freepBox(this->rgb);
-    freepBox(this->conv1_matrix);
     freepBox(this->conv1_out);
     freepBox(this->pooling1_out);
-    freepBox(this->conv2_matrix);
     freepBox(this->conv2_out);
     freepBox(this->pooling2_out);
-    freepBox(this->conv3_matrix);
     freepBox(this->conv3_out);
     freepBox(this->fc4_out);
     freepBox(this->score_);
@@ -303,19 +267,15 @@ Onet::Onet() {
     Othreshold = 0.7f;
     this->rgb = new pBox;
 
-    this->conv1_matrix = new pBox;
     this->conv1_out = new pBox;
     this->pooling1_out = new pBox;
 
-    this->conv2_matrix = new pBox;
     this->conv2_out = new pBox;
     this->pooling2_out = new pBox;
 
-    this->conv3_matrix = new pBox;
     this->conv3_out = new pBox;
     this->pooling3_out = new pBox;
 
-    this->conv4_matrix = new pBox;
     this->conv4_out = new pBox;
 
     this->fc5_out = new pBox;
@@ -368,20 +328,16 @@ Onet::Onet() {
     //Init the network
     OnetImage2MatrixInit(rgb);
 
-    feature2MatrixInit(this->rgb, this->conv1_matrix, this->conv1_wb);
-    convolutionInit(this->conv1_wb, this->rgb, this->conv1_out, this->conv1_matrix);
+    convolutionInit(this->conv1_wb, this->rgb, this->conv1_out);
     maxPoolingInit(this->conv1_out, this->pooling1_out, 3, 2);
 
-    feature2MatrixInit(this->pooling1_out, this->conv2_matrix, this->conv2_wb);
-    convolutionInit(this->conv2_wb, this->pooling1_out, this->conv2_out, this->conv2_matrix);
+    convolutionInit(this->conv2_wb, this->pooling1_out, this->conv2_out);
     maxPoolingInit(this->conv2_out, this->pooling2_out, 3, 2);
 
-    feature2MatrixInit(this->pooling2_out, this->conv3_matrix, this->conv3_wb);
-    convolutionInit(this->conv3_wb, this->pooling2_out, this->conv3_out, this->conv3_matrix);
+    convolutionInit(this->conv3_wb, this->pooling2_out, this->conv3_out);
     maxPoolingInit(this->conv3_out, this->pooling3_out, 2, 2);
 
-    feature2MatrixInit(this->pooling3_out, this->conv4_matrix, this->conv4_wb);
-    convolutionInit(this->conv4_wb, this->pooling3_out, this->conv4_out, this->conv4_matrix);
+    convolutionInit(this->conv4_wb, this->pooling3_out, this->conv4_out);
 
     fullconnectInit(this->fc5_wb, this->fc5_out);
     fullconnectInit(this->score_wb, this->score_);
@@ -391,16 +347,12 @@ Onet::Onet() {
 
 Onet::~Onet() {
     freepBox(this->rgb);
-    freepBox(this->conv1_matrix);
     freepBox(this->conv1_out);
     freepBox(this->pooling1_out);
-    freepBox(this->conv2_matrix);
     freepBox(this->conv2_out);
     freepBox(this->pooling2_out);
-    freepBox(this->conv3_matrix);
     freepBox(this->conv3_out);
     freepBox(this->pooling3_out);
-    freepBox(this->conv4_matrix);
     freepBox(this->conv4_out);
     freepBox(this->fc5_out);
     freepBox(this->score_);
@@ -441,7 +393,6 @@ void Onet::run(Mat &image) {
     //Pooling layer
     maxPooling(this->conv1_out, this->pooling1_out, 3, 2);
 
-
     convolution(this->conv2_wb, this->pooling1_out, this->conv2_out);
     prelu(this->conv2_out, this->conv2_wb->pbias, this->prelu_gmma2->pdata);
     maxPooling(this->conv2_out, this->pooling2_out, 3, 2);
@@ -453,7 +404,6 @@ void Onet::run(Mat &image) {
 
     //conv4
     convolution(this->conv4_wb, this->pooling3_out, this->conv4_out);
-//    convolution(this->conv4_wb, this->pooling3_out, this->conv4_out, this->conv4_matrix);
     prelu(this->conv4_out, this->conv4_wb->pbias, this->prelu_gmma4->pdata);
 
     fullconnect(this->fc5_wb, this->conv4_out, this->fc5_out);
