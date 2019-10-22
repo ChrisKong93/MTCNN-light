@@ -613,7 +613,7 @@ void mtcnn::findFace(Mat &image) {
         if ((*it).exist) {
             rectangle(image, Point((*it).y1, (*it).x1), Point((*it).y2, (*it).x2), Scalar(0, 0, 255), 2, 8, 0);
             for (int num = 0; num < 5; num++)
-                circle(image, Point((int) *(it->ppoint + num), (int) *(it->ppoint + num + 5)), 3, Scalar(0, 255, 255),
+                circle(image, Point((int) *(it->ppoint + num), (int) *(it->ppoint + num + 5)), 2, Scalar(0, 255, 255),
                        -1);
         }
     }
