@@ -49,3 +49,5 @@ the opencv and vs project environment with 64bit, don't choose x86
 ２０１９－１０－１０脱离openblas实现mtcnn（还是按照原来思路实现）
 
 ２０１９－１０－１５按照普通卷积思路实现
+
+2019年12月5日 优化卷积函数

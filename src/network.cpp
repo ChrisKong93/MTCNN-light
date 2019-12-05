@@ -55,68 +55,103 @@ void image2Matrix(const Mat &image, const struct pBox *pbox) {
     }
 }
 
-void featurePadInit(const pBox *pbox, pBox *outpBox, const int pad) {
-    if (pad <= 0) {
+void featurePadInit(const pBox *pbox, pBox *outpBox, const int pad, const int padw, const int padh) {
+    if (pad < -1) {
         cout << "the data needn't to pad,please check you network!" << endl;
         return;
     }
     outpBox->channel = pbox->channel;
-    outpBox->height = pbox->height + 2 * pad;
-    outpBox->width = pbox->width + 2 * pad;
+    if (pad == -1) {
+        outpBox->height = pbox->height + 2 * padh;
+        outpBox->width = pbox->width + 2 * padw;
+    } else {
+        outpBox->height = pbox->height + 2 * pad;
+        outpBox->width = pbox->width + 2 * pad;
+    }
     long RowByteNum = outpBox->width * sizeof(mydataFmt);
     outpBox->pdata = (mydataFmt *) malloc(outpBox->channel * outpBox->height * RowByteNum);
     if (outpBox->pdata == NULL)cout << "the featurePadInit is failed!!" << endl;
     memset(outpBox->pdata, 0, outpBox->channel * outpBox->height * RowByteNum);
 }
 
-void featurePad(const pBox *pbox, const pBox *outpBox, const int pad) {
+void featurePad(const pBox *pbox, pBox *outpBox, const int pad, const int padw, const int padh) {
     mydataFmt *p = outpBox->pdata;
     mydataFmt *pIn = pbox->pdata;
-
-    for (int row = 0; row < outpBox->channel * outpBox->height; row++) {
-
-        if ((row % outpBox->height) < pad || (row % outpBox->height > (outpBox->height - pad - 1))) {
-            p += outpBox->width;
-            continue;
+    if (pad == -1) {
+        for (int row = 0; row < outpBox->channel * outpBox->height; row++) {
+            if ((row % outpBox->height) < padh || (row % outpBox->height > (outpBox->height - padh - 1))) {
+                p += outpBox->width;
+                continue;
+            }
+            p += padw;
+            memcpy(p, pIn, pbox->width * sizeof(mydataFmt));
+            p += pbox->width + padw;
+            pIn += pbox->width;
         }
-        p += pad;
-        memcpy(p, pIn, pbox->width * sizeof(mydataFmt));
-        p += pbox->width + pad;
-        pIn += pbox->width;
+    } else {
+        for (int row = 0; row < outpBox->channel * outpBox->height; row++) {
+            if ((row % outpBox->height) < pad || (row % outpBox->height > (outpBox->height - pad - 1))) {
+                p += outpBox->width;
+                continue;
+            }
+            p += pad;
+            memcpy(p, pIn, pbox->width * sizeof(mydataFmt));
+            p += pbox->width + pad;
+            pIn += pbox->width;
+        }
     }
 }
 
 void convolutionInit(const Weight *weight, const pBox *pbox, pBox *outpBox) {
     outpBox->channel = weight->selfChannel;
-    outpBox->width = (pbox->width - weight->kernelSize) / weight->stride + 1;
-    outpBox->height = (pbox->height - weight->kernelSize) / weight->stride + 1;
+    if (weight->kernelSize == 0) {
+        outpBox->width = (pbox->width - weight->w) / weight->stride + 1;
+        outpBox->height = (pbox->height - weight->h) / weight->stride + 1;
+    } else {
+        outpBox->width = (pbox->width - weight->kernelSize) / weight->stride + 1;
+        outpBox->height = (pbox->height - weight->kernelSize) / weight->stride + 1;
+    }
+//    cout << outpBox->pdata << endl;
     outpBox->pdata = (mydataFmt *) malloc(outpBox->width * outpBox->height * outpBox->channel * sizeof(mydataFmt));
+//    cout << outpBox->pdata << endl;
     if (outpBox->pdata == NULL)cout << "the convolutionInit is failed!!" << endl;
     memset(outpBox->pdata, 0, outpBox->width * outpBox->height * outpBox->channel * sizeof(mydataFmt));
+    if (weight->pad != 0) {
+        pBox *padpbox = new pBox;
+        featurePadInit(outpBox, padpbox, weight->pad, weight->padw, weight->padh);
+        featurePad(outpBox, padpbox, weight->pad, weight->padw, weight->padh);
+        *outpBox = *padpbox;
+    }
 }
 
 void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox) {
-    if (weight->pad != 0) {
-        struct pBox *padpbox = new pBox;
-        featurePad(pbox, padpbox, weight->pad);
-    }
-    int ckh, ckw, ckd, cknum, imginputh, imginputw, imginputd;
+    int ckh, ckw, ckd, stride, cknum, ckpad, imginputh, imginputw, imginputd, Nh, Nw;
     float *ck, *imginput;
-    float *r = outpBox->pdata;
+    float *output = outpBox->pdata;
     float temp;
     ck = weight->pdata;
-    ckh = weight->kernelSize;
-    ckw = weight->kernelSize;
+    if (weight->kernelSize == 0) {
+        ckh = weight->h;
+        ckw = weight->w;
+    } else {
+        ckh = weight->kernelSize;
+        ckw = weight->kernelSize;
+    }
     ckd = weight->lastChannel;
     cknum = weight->selfChannel;
+    ckpad = weight->pad;
+    stride = weight->stride;
     imginput = pbox->pdata;
     imginputh = pbox->height;
     imginputw = pbox->width;
     imginputd = pbox->channel;
+    Nh = ((imginputh - ckh + 2 * ckpad) / stride) + 1;
+    Nw = ((imginputw - ckw + 2 * ckpad) / stride) + 1;
     for (int i = 0; i < cknum; ++i) {
-        for (int j = 0; j < imginputh - ((ckh + 1) / 2); ++j) {
-            for (int k = 0; k < imginputw - ((ckw + 1) / 2); ++k) {
+        for (int j = 0; j < Nh; j += stride) {
+            for (int k = 0; k < Nw; k += stride) {
                 temp = 0.0;
+
                 for (int m = 0; m < ckd; ++m) {
                     for (int n = 0; n < ckh; ++n) {
                         for (int i1 = 0; i1 < ckw; ++i1) {
@@ -127,9 +162,8 @@ void convolution(const Weight *weight, const pBox *pbox, pBox *outpBox) {
                     }
                 }
                 //按照顺序存储
-                r[i * outpBox->height * outpBox->width + j * outpBox->width + k] = temp;
+                output[i * outpBox->height * outpBox->width + j * outpBox->width + k] = temp;
             }
-
         }
     }
 }
@@ -251,13 +285,20 @@ void fullconnect(const Weight *weight, const pBox *pbox, pBox *outpBox) {
 
 void vectorXmatrix(float *matrix, float *v, int size, int v_w, int v_h, float *p) {
     for (int i = 0; i < v_h; i++) {
+        p[i] = 0;
         for (int j = 0; j < v_w; j++) {
             p[i] += matrix[j] * v[i * v_w + j];
+//            cout << p[i] << endl;
         }
+//        cout << p[i] << endl;
+//        p[i] = -0.0735729;
+//        cout << "...." << endl;
+//        break;
     }
+//    cout << "...." << endl;
 }
 
-void readData(string filename, long dataNumber[], mydataFmt *pTeam[]) {
+void readData(string filename, long dataNumber[], mydataFmt *pTeam[], int length) {
     ifstream in(filename.data());
     string line;
     if (in) {
@@ -270,20 +311,29 @@ void readData(string filename, long dataNumber[], mydataFmt *pTeam[]) {
                     line.erase(0, 1);
                     pos = line.find(']');
                     line.erase(pos, 1);
+                    pos = line.find('\r');
+                    if (pos != -1) {
+                        line.erase(pos, 1);
+                    }
                     *(pTeam[count])++ = atof(line.data());
                 } else {
                     count++;
+                    if ((length != 0) && (count == length))
+                        break;
                     dataNumber[count] += dataNumber[count - 1];
-
                     line.erase(0, 1);
                     pos = line.find(']');
                     line.erase(pos, 1);
+                    pos = line.find('\r');
+                    if (pos != -1) {
+                        line.erase(pos, 1);
+                    }
                     *(pTeam[count])++ = atof(line.data());
                 }
                 i++;
             }
             catch (exception &e) {
-                cout << " yichang " << i << endl;
+                cout << " error " << i << endl;
                 return;
             }
         }
@@ -292,21 +342,34 @@ void readData(string filename, long dataNumber[], mydataFmt *pTeam[]) {
     }
 }
 
-//									w			  sc			 lc			ks				s		p
-long initConvAndFc(struct Weight *weight, int schannel, int lchannel, int kersize, int stride, int pad) {
+//									w			  sc			 lc			ks				s		p    kw       kh
+long initConvAndFc(struct Weight *weight, int schannel, int lchannel, int kersize,
+                   int stride, int pad, int w, int h, int padw, int padh) {
     weight->selfChannel = schannel;
     weight->lastChannel = lchannel;
     weight->kernelSize = kersize;
+    if (kersize == 0) {
+        weight->h = h;
+        weight->w = w;
+    }
+    if (pad == -1) {
+        weight->padh = padh;
+        weight->padw = padw;
+    }
     weight->stride = stride;
     weight->pad = pad;
     weight->pbias = (mydataFmt *) malloc(schannel * sizeof(mydataFmt));
-    if (weight->pbias == NULL)cout << "neicun muyou shenqing chengong!!";
+    if (weight->pbias == NULL)cout << "Memory request not successful!!!";
     memset(weight->pbias, 0, schannel * sizeof(mydataFmt));
-    long byteLenght = weight->selfChannel * weight->lastChannel * weight->kernelSize * weight->kernelSize;
+    long byteLenght;
+    if (kersize == 0) {
+        byteLenght = weight->selfChannel * weight->lastChannel * weight->h * weight->w;
+    } else {
+        byteLenght = weight->selfChannel * weight->lastChannel * weight->kernelSize * weight->kernelSize;
+    }
     weight->pdata = (mydataFmt *) malloc(byteLenght * sizeof(mydataFmt));
-    if (weight->pdata == NULL)cout << "neicun muyou shenqing chengong!!";
+    if (weight->pdata == NULL)cout << "Memory request not successful!!!";
     memset(weight->pdata, 0, byteLenght * sizeof(mydataFmt));
-
     return byteLenght;
 }
 
@@ -384,7 +447,7 @@ void nms(vector<struct Bbox> &boundingBox_, vector<struct orderScore> &bboxScore
                                                                              : boundingBox_.at(order).x2;
                 minY = (boundingBox_.at(num).y2 < boundingBox_.at(order).y2) ? boundingBox_.at(num).y2
                                                                              : boundingBox_.at(order).y2;
-                //maxX1 and maxY1 reuse 
+                //maxX1 and maxY1 reuse
                 maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
                 maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
                 //IOU reuse for the area of two bbox
@@ -392,9 +455,10 @@ void nms(vector<struct Bbox> &boundingBox_, vector<struct orderScore> &bboxScore
                 if (!modelname.compare("Union"))
                     IOU = IOU / (boundingBox_.at(num).area + boundingBox_.at(order).area - IOU);
                 else if (!modelname.compare("Min")) {
-                    IOU = IOU / ((boundingBox_.at(num).area < boundingBox_.at(order).area) ? boundingBox_.at(num).area
-                                                                                           : boundingBox_.at(
-                                    order).area);
+                    IOU = IOU /
+                          ((boundingBox_.at(num).area < boundingBox_.at(order).area) ? boundingBox_.at(num).area
+                                                                                     : boundingBox_.at(
+                                          order).area);
                 }
                 if (IOU > overlap_threshold) {
                     boundingBox_.at(num).exist = false;

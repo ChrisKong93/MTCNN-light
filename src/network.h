@@ -11,6 +11,7 @@
 #include <string>
 #include <math.h>
 #include "pBox.h"
+//#include <cblas.h>
 
 using namespace cv;
 
@@ -20,15 +21,16 @@ void image2Matrix(const Mat &image, const struct pBox *pbox);
 
 void maxPooling(const pBox *pbox, pBox *Matrix, int kernelSize, int stride);
 
-void featurePad(const pBox *pbox, const pBox *outpBox, const int pad);
+void featurePad(const pBox *pbox, pBox *outpBox, const int pad, const int padw = 0, const int padh = 0);
 
 void prelu(struct pBox *pbox, mydataFmt *pbias, mydataFmt *prelu_gmma);
 
 void fullconnect(const Weight *weight, const pBox *pbox, pBox *outpBox);
 
-void readData(string filename, long dataNumber[], mydataFmt *pTeam[]);
+void readData(string filename, long dataNumber[], mydataFmt *pTeam[], int length = 0);
 
-long initConvAndFc(struct Weight *weight, int schannel, int lchannel, int kersize, int stride, int pad);
+long initConvAndFc(struct Weight *weight, int schannel, int lchannel, int kersize, int stride, int pad,
+                   int w = 0, int h = 0, int padw = 0, int padh = 0);
 
 void initpRelu(struct pRelu *prelu, int width);
 
@@ -36,7 +38,7 @@ void softmax(const struct pBox *pbox);
 
 void image2MatrixInit(Mat &image, struct pBox *pbox);
 
-void featurePadInit(const pBox *pbox, pBox *outpBox, const int pad);
+void featurePadInit(const pBox *pbox, pBox *outpBox, const int pad, const int padw = 0, const int padh = 0);
 
 void maxPoolingInit(const pBox *pbox, pBox *Matrix, int kernelSize, int stride);
 

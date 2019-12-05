@@ -3,12 +3,13 @@
 
 #include <stdlib.h>
 #include <iostream>
+#include <opencv2/core/cvstd.hpp>
 
 using namespace std;
 #define mydataFmt float
 
 
-struct pBox {
+struct pBox : public cv::String {
     mydataFmt *pdata;
     int width;
     int height;
@@ -28,6 +29,10 @@ struct Weight {
     int kernelSize;
     int stride;
     int pad;
+    int w;
+    int h;
+    int padw;
+    int padh;
 };
 
 struct Bbox {
