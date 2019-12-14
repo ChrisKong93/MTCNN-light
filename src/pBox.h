@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <opencv2/core/cvstd.hpp>
+#include <vector>
 
 using namespace std;
 #define mydataFmt float
@@ -15,6 +16,8 @@ struct pBox : public cv::String {
     int height;
     int channel;
 };
+
+vector<mydataFmt> pBox;
 
 struct pRelu {
     mydataFmt *pdata;

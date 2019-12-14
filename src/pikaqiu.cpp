@@ -3,7 +3,7 @@
 //#include "facenet.h"
 #include <time.h>
 
-int main() {
+void run() {
     int b = 0;
     if (b == 0) {
         Mat image = imread("../4.jpg");
@@ -26,7 +26,7 @@ int main() {
         cap >> image;
         if (!image.data) {
             cout << "读取视频失败" << endl;
-            return -1;
+            return;
         }
 
         mtcnn find(image.rows, image.cols);
@@ -43,5 +43,11 @@ int main() {
         waitKey(0);
         image.release();
     }
+    return;
+}
+
+
+int main() {
+    run();
     return 0;
 }

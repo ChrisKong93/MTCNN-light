@@ -94,6 +94,12 @@ void Pnet::run(Mat &image, float scale) {
     convolution(this->conv4c2_wb, this->conv3, this->location_);
     addbias(this->location_, this->conv4c2_wb->pbias);
     //softmax layer
+//    if (this->location_->height < 12 || this->location_->width) {
+//        for (int i = 0; i < this->location_->height * location_->width * location_->channel; ++i) {
+//            cout << location_->pdata[i] << endl;
+//        }
+//        cout << "---------------" << endl;
+//    }
     generateBbox(this->score_, this->location_, scale);
 }
 
