@@ -17,8 +17,6 @@ struct pBox : public cv::String {
     int channel;
 };
 
-vector<mydataFmt> pBox;
-
 struct pRelu {
     mydataFmt *pdata;
     int width;
