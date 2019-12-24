@@ -35,7 +35,8 @@ int main() {
             cap >> image;
             find.findFace(image);
             imshow("result", image);
-            if (waitKey(1) >= 0) break;
+            waitKey(1);
+//            if (waitKey(1) >= 0) break;
             start = clock() - start;
             cout << "time is " << (double) start / CLOCKS_PER_SEC * 1000 << "ms" << endl;
         }
