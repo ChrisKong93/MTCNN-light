@@ -6,7 +6,7 @@
 void run() {
     int b = 0;
     if (b == 0) {
-        Mat image = imread("../4.jpg");
+        Mat image = imread("../1.jpeg");
 //        Mat image = imread("C:\\Users\\Lenovo\\Desktop\\image/1156546.jpg");
         mtcnn find(image.rows, image.cols);
         clock_t start;
